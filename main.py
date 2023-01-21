@@ -90,10 +90,10 @@ markers[unknown==255] = 0
 markers = cv.watershed(img,markers)
 img[markers == -1] = [255,0,0]
 
-#plt.subplot(121),plt.imshow(img,cmap = 'gray')
-#plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-#plt.subplot(122),plt.imshow(thresh,cmap = 'gray')
-#plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(121),plt.imshow(img,cmap = 'gray')
+plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(122),plt.imshow(thresh,cmap = 'gray')
+plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
 #plt.show()
 
 mask = np.zeros(img.shape[:2],np.uint8)
@@ -103,4 +103,5 @@ rect = (50,50,450,290)
 cv.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv.GC_INIT_WITH_RECT)
 mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
 img = img*mask2[:,:,np.newaxis]
+
 plt.imshow(img),plt.colorbar(),plt.show()
