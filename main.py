@@ -63,46 +63,53 @@ plt.show()
 import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
-img = cv.imread('RX.jpg')
-gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
-cv.destroyAllWindows()
+from flask import Flask
+app = Flask(__name__)
+@app.route("/")
+def main():
+    #Aqui va su código
 
-# noise removal
-kernel = np.ones((3,3),np.uint8)
-opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
-# sure background area
-sure_bg = cv.dilate(opening,kernel,iterations=3)
-# Finding sure foreground area
-dist_transform = cv.distanceTransform(opening,cv.DIST_L2,5)
-ret, sure_fg = cv.threshold(dist_transform,0.7*dist_transform.max(),255,0)
-# Finding unknown region
-sure_fg = np.uint8(sure_fg)
-unknown = cv.subtract(sure_bg,sure_fg)
+    img = cv.imread('RX.jpg')
+    gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
+    ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+    cv.destroyAllWindows()
 
-# Marker labelling
-ret, markers = cv.connectedComponents(sure_fg)
-# Add one to all labels so that sure background is not 0, but 1
-markers = markers+1
-# Now, mark the region of unknown with zero
-markers[unknown==255] = 0
+    # noise removal
+    kernel = np.ones((3,3),np.uint8)
+    opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
+    # sure background area
+    sure_bg = cv.dilate(opening,kernel,iterations=3)
+    # Finding sure foreground area
+    dist_transform = cv.distanceTransform(opening,cv.DIST_L2,5)
+    ret, sure_fg = cv.threshold(dist_transform,0.7*dist_transform.max(),255,0)
+    # Finding unknown region
+    sure_fg = np.uint8(sure_fg)
+    unknown = cv.subtract(sure_bg,sure_fg)
 
-markers = cv.watershed(img,markers)
-img[markers == -1] = [255,0,0]
+    # Marker labelling
+    ret, markers = cv.connectedComponents(sure_fg)
+    # Add one to all labels so that sure background is not 0, but 1
+    markers = markers+1
+    # Now, mark the region of unknown with zero
+    markers[unknown==255] = 0
 
-plt.subplot(121),plt.imshow(img,cmap = 'gray')
-plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-plt.subplot(122),plt.imshow(thresh,cmap = 'gray')
-plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-#plt.show()
+    markers = cv.watershed(img,markers)
+    img[markers == -1] = [255,0,0]
 
-mask = np.zeros(img.shape[:2],np.uint8)
-bgdModel = np.zeros((1,65),np.float64)
-fgdModel = np.zeros((1,65),np.float64)
-rect = (50,50,450,290)
-cv.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv.GC_INIT_WITH_RECT)
-mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
-img = img*mask2[:,:,np.newaxis]
+    plt.subplot(121),plt.imshow(img,cmap = 'gray')
+    plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+    plt.subplot(122),plt.imshow(thresh,cmap = 'gray')
+    plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+    #plt.show()
 
-plt.imshow(img),plt.show()
-'''plt.imshow(img),plt.colorbar(),plt.show'''
+    mask = np.zeros(img.shape[:2],np.uint8)
+    bgdModel = np.zeros((1,65),np.float64)
+    fgdModel = np.zeros((1,65),np.float64)
+    rect = (50,50,450,290)
+    cv.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv.GC_INIT_WITH_RECT)
+    mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
+    img = img*mask2[:,:,np.newaxis]
+
+    plt.imshow(img),plt.show()
+    '''plt.imshow(img),plt.colorbar(),plt.show'''
+    return img
